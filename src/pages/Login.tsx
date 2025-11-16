@@ -1,5 +1,5 @@
 import { CardDemo } from "../components/component/CardDemo"
-import { Suspense, useState } from "react"
+import { useState } from "react"
 import { useAuth } from "../context/authContext"
 import { storage } from "../utils/localStorage"
 import { useNavigate } from "react-router-dom"
@@ -8,10 +8,10 @@ function Login() {
     const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
+    const [_, setIsLoading] = useState(false)
     const [error, setError] = useState("")
 
-    const { login } = useAuth()
+    const authContext = useAuth()
 
     const navigate = useNavigate()
 
@@ -40,7 +40,14 @@ function Login() {
             }
 
             // Attempt login
-            const success: boolean = await login(email, password)
+            if (!authContext) {
+                setError("Auth context not available")
+                setIsLoading(false)
+                return
+            }
+            const success: boolean = authContext.login(name, email, password)
+
+            console.log(success, 'login success')
 
             if (success) {
                 storage.set('user', {name, email})

@@ -1,7 +1,7 @@
 import { storage } from "../utils/localStorage"
 import { Navigate, Outlet } from "react-router-dom"
 export default function PrivateRoutesLoginFallback() {
-  const auth = storage.get('user')
+  const auth = storage.get('user') as { name?: string; email?: string } | null
   
   console.log('PrivateRoutesLoginFallback - auth:', auth)
   

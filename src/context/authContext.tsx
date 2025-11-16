@@ -1,9 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext(null);
+interface User {
+        username: string,
+        email: string,
+        password: string, 
+      };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (username: string, email: string, password: string) => boolean;
+  logout: () => void;
+  updateUser: (updates: User) => void;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+
+export const AuthProvider = ({ children }: { children: React.ReactElement }) => {
+  const [user, setUser] = useState<User|null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load user from localStorage on mount
@@ -25,14 +40,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Login function - saves user to localStorage
-  const login = (username, password) => {
-    if (username && password) {
-      const userData = {
-        username,
-        id: Date.now(),
-        email: `${username}@example.com`,
-        createdAt: new Date().toISOString()
-      };
+  const login = (username: string,email: string,  password: string): boolean => {
+    if (username && password && email) {
+      const userData: User = {username, email, password};
       
       // Save to state
       setUser(userData);
@@ -52,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Update user - updates both state and localStorage
-  const updateUser = (updates) => {
+  const updateUser = (updates:User): void => {
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
     localStorage.setItem('user', JSON.stringify(updatedUser));

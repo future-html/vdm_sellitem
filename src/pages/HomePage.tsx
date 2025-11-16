@@ -1,11 +1,26 @@
 import { useState, useMemo } from "react";
 import { itemsCategories as initialItems } from "../lib/constant";
 import { storage } from "../utils/localStorage";
-import process from "process";
+interface Item {
+    itemName: string;
+    cost: number;
+    itemId: string;
+    stock: number;
+    image: string;
+    description: string;
+}
+
+interface CartItem {
+    itemName: string;
+    cost: number;
+    quantity: number;
+    itemId: string;
+}
+
 function HomePage() {
     // stock quantity is not equal to user selected
     const [step, setStep] = useState(1);
-    const [cart, setCart] = useState([]);
+    const [cart, setCart] = useState<CartItem[]>([]);
     const [paymentMethod, setPaymentMethod] = useState("");
 
 
@@ -25,12 +40,15 @@ function HomePage() {
         if (paymentMethod) setStep(4);
     };
 
-    const auth = storage.get('user');
-    const {username, email} = useMemo(() => {
+    const auth = storage.get('user') as { name?: string } | null;
+    const username = useMemo(() => {
         return auth?.name || "Guest";
     }, [auth])
+    const email = "";
 
-    const increaseQty = (item) => {
+
+
+    const increaseQty = (item: Item): void => {
         if (item.stock > quantities[item.itemName]) {
             setQuantities(prev => ({
                 ...prev,
@@ -39,7 +57,7 @@ function HomePage() {
         }
     };
 
-    const decreaseQty = (item) => {
+    const decreaseQty = (item:Item): void => {
         if (quantities[item.itemName] > 0) {
             setQuantities(prev => ({
                 ...prev,
@@ -48,12 +66,12 @@ function HomePage() {
         }
     };
 
-    const addToCart = (item) => {
+    const addToCart = (item:Item): void => {
         const updatedCart = [...cart];
 
         const filteredExistCart = updatedCart.findIndex((cart) => cart.itemId === item.itemId);
         if (filteredExistCart === -1) {
-            updatedCart.push({ itemName: item.itemName, cost: item.cost, quantity: quantities[item.itemName], itemId: item.itemId});
+            updatedCart.push({ itemName: item.itemName, cost: item.cost, quantity: quantities[item.itemName], itemId: item.itemId });
         }
         else {
             updatedCart[filteredExistCart].quantity = quantities[item.itemName];
@@ -61,7 +79,11 @@ function HomePage() {
         setCart(updatedCart)
     };
 
-    console.log(cart, 'cart');
+    // console.log(cart, 'cart');
+
+    // console.log(import.meta.env)
+
+    console.log(logSuccess, 'logSuccess')
 
 
     return (
@@ -252,11 +274,13 @@ function HomePage() {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    "Authorization": `Device ${process.env.CLIENT_ID}:${process.env.TOKEN}`
+                                    "Authorization": `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
                                 },
-                                body: JSON.stringify({username, email, summary: cart})
-                            }).then(res => res.json()).then((data) => data).catch(err => console.error(err));
-                            setLogSuccess(result); 
+                                body: JSON.stringify({ "data": { username, email, summary: cart } })
+                            }).then(res => res.json()).catch(err => console.error(err));
+                            console.log(result)
+                            setLogSuccess(result)
+
 
                         }}
                     >
