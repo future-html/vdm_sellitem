@@ -69,6 +69,8 @@ function HomePage() {
     const addToCart = (item:Item): void => {
         const updatedCart = [...cart];
 
+        console.log('add cart')
+
         const filteredExistCart = updatedCart.findIndex((cart) => cart.itemId === item.itemId);
         if (filteredExistCart === -1) {
             updatedCart.push({ itemName: item.itemName, cost: item.cost, quantity: quantities[item.itemName], itemId: item.itemId });
@@ -76,7 +78,9 @@ function HomePage() {
         else {
             updatedCart[filteredExistCart].quantity = quantities[item.itemName];
         }
-        setCart(updatedCart)
+        console.log(updatedCart, 'update cart')
+        const filteredCart = updatedCart.filter((cart) => cart.quantity !== 0)
+        setCart(filteredCart)
     };
 
     // console.log(cart, 'cart');
@@ -136,7 +140,7 @@ function HomePage() {
                                     {/* Add to Cart Button */}
                                     <button
                                         className="mt-3 w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400"
-                                        disabled={qty === 0}
+                                        disabled={item.stock === 0}
                                         onClick={() => addToCart(item)}
                                     >
                                         Add to Cart
