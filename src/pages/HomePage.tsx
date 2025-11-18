@@ -39,16 +39,7 @@ function HomePage() {
 
     // Create cart summary with full details
     const cartSummary = useMemo(() => {
-        return JSON.stringify({
-            items: cart.map(c => ({
-                itemName: c.itemName,
-                cost: c.cost,
-                quantity: c.quantity
-            })),
-            total: cart.reduce((sum, c) => sum + (c.cost * c.quantity), 0),
-            paymentMethod: paymentMethod,
-            timestamp: new Date().toISOString()
-        });
+        return JSON.stringify(cart.map(c => c.itemName).join(' '));
     }, [cart, paymentMethod]);
 
     // Publish message function
