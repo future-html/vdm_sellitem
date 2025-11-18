@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect} from "react";
 import { itemsCategories as initialItems } from "../lib/constant";
-import mqtt from "mqtt";
+// Mock data for demonstration
+import mqtt from 'mqtt'
 
 interface Item {
     itemName: string;
@@ -17,40 +18,28 @@ interface CartItem {
     quantity: number;
     itemId: string;
 }
-
-interface CartSummary {
-    items: {
-        itemName: string;
-        cost: number;
-        quantity: number;
-    }[];
-    total: number;
-    paymentMethod: string;
-    timestamp: string;
-}
-
 function HomePage() {
-    const [client, setClient] = useState<mqtt.MqttClient | null>(null);
-    const [isConnected, setIsConnected] = useState<boolean>(false);
-    const [resetTrigger, setResetTrigger] = useState<number>(0);
-    const [step, setStep] = useState<number>(1);
+    const [client, _] = useState<mqtt.MqttClient | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
+    const [resetTrigger, setResetTrigger] = useState(0);
+    const [step, setStep] = useState(1);
     const [cart, setCart] = useState<CartItem[]>([]);
-    const [paymentMethod, setPaymentMethod] = useState<string>("");
-    const [summaryCart, setSummaryCart] = useState<string>("");
+    const [paymentMethod, setPaymentMethod] = useState("");
+   //  const [receivedMessages, setReceivedMessages] = useState([]);
 
-    const [quantities, setQuantities] = useState<Record<string, number>>(
+    const [quantities, setQuantities] = useState(
         Object.fromEntries(initialItems.map(item => [item.itemName, 0]))
     );
 
-    const [items, setItems] = useState<Item[]>(
+    const [items, setItems] = useState(
         initialItems.map(i => ({ ...i }))
     );
 
-    const [logSuccess, setLogSuccess] = useState<string>("");
+    const [logSuccess, setLogSuccess] = useState("");
 
     // Create cart summary with full details
-    const cartSummary = useMemo<string>(() => {
-        const summary: CartSummary = {
+    const cartSummary = useMemo(() => {
+        return JSON.stringify({
             items: cart.map(c => ({
                 itemName: c.itemName,
                 cost: c.cost,
@@ -59,19 +48,18 @@ function HomePage() {
             total: cart.reduce((sum, c) => sum + (c.cost * c.quantity), 0),
             paymentMethod: paymentMethod,
             timestamp: new Date().toISOString()
-        };
-        return JSON.stringify(summary);
+        });
     }, [cart, paymentMethod]);
 
     // Publish message function
-    const publishMessage = (topic: string, msg: string): void => {
+    const publishMessage = (topic:string, msg:string) => {
         if (!client || !isConnected) {
             console.log("❌ MQTT client not ready");
             setLogSuccess("Error: MQTT not connected");
             return;
         }
 
-        client.publish(topic, msg, {}, (err?: Error) => {
+        client.publish(topic, msg, {}, (err) => {
             if (err) {
                 console.error("Publish error:", err);
                 setLogSuccess(`Error: ${err.message}`);
@@ -82,7 +70,7 @@ function HomePage() {
         });
     };
 
-    const onConfirmPayment = (): void => {
+    const onConfirmPayment = () => {
         if (paymentMethod) {
             // Send cart summary when payment is confirmed
             publishMessage("@msg/vending", cartSummary);
@@ -90,7 +78,7 @@ function HomePage() {
         }
     };
 
-    const increaseQty = (item: Item): void => {
+    const increaseQty = (item: Item) => {
         if (item.stock > quantities[item.itemName]) {
             setQuantities(prev => ({
                 ...prev,
@@ -99,7 +87,7 @@ function HomePage() {
         }
     };
 
-    const decreaseQty = (item: Item): void => {
+    const decreaseQty = (item: Item) => {
         if (quantities[item.itemName] > 0) {
             setQuantities(prev => ({
                 ...prev,
@@ -108,8 +96,8 @@ function HomePage() {
         }
     };
 
-    const addToCart = (item: Item): void => {
-        const updatedCart: CartItem[] = [...cart];
+    const addToCart = (item: Item) => {
+        const updatedCart = [...cart];
         const filteredExistCart = updatedCart.findIndex((c) => c.itemId === item.itemId);
         
         if (filteredExistCart === -1) {
@@ -127,56 +115,37 @@ function HomePage() {
         setCart(filteredCart);
     };
 
-    // MQTT Connection
+    // MQTT Connection (simulated for demo)
     useEffect(() => {
-        const host = "wss://mqtt.netpie.io:443/mqtt";
-        const options: mqtt.IClientOptions = {
-            clientId: import.meta.env.VITE_CLIENT_ID,
-            username: import.meta.env.VITE_TOKEN,
-            password: import.meta.env.VITE_PASSWORD,
-        };
+        // Simulate MQTT connection
+        // interface MockMqttClient {
+        //     connected: boolean;
+        //     publish: (topic: string, message: string, options: Record<string, unknown>, callback: (err: Error | null) => void) => void;
+        //     subscribe: (topic: string, callback: (err: Error | null) => void) => void;
+        //     on: (event: string, handler: (data: unknown) => void) => void;
+        //     end: () => void;
+        // }
 
-        const mqttClient: mqtt.MqttClient = mqtt.connect(host, options);
+        // const mockClient: MockMqttClient = {
+        //     connected: true,
+        //     publish: (topic, message, _, callback) => {
+        //     setTimeout(() => {
+        //         console.log(`Published to ${topic}:`, message);
+        //         callback(null);
+        //     }, 100);
+        //     },
+        //     subscribe: (_, callback) => {
+        //     setTimeout(() => callback(null), 100);
+        //     },
+        //     on: () => {},
+        //     end: () => {}
+        // };
 
-        mqttClient.on("connect", () => {
-            console.log("✅ MQTT Connected");
-            setIsConnected(true);
-            setLogSuccess("Connected to MQTT");
-            
-            mqttClient.subscribe("@msg/#", (err: Error | null) => {
-                if (err) {
-                    console.error("Subscribe error:", err);
-                } else {
-                    console.log("Subscribed to @msg/#");
-                }
-            });
-        });
-
-        mqttClient.on("message", (topic: string, message: Buffer) => {
-            const msg = message.toString();
-            console.log("📥 Received:", topic, msg);
-            setSummaryCart(msg);
-        });
-
-        mqttClient.on("error", (error: Error) => {
-            console.error("❌ MQTT Error:", error);
-            setLogSuccess(`Error: ${error.message}`);
-            setIsConnected(false);
-        });
-
-        mqttClient.on("offline", () => {
-            console.log("MQTT offline");
-            setIsConnected(false);
-        });
-
-        mqttClient.on("reconnect", () => {
-            console.log("MQTT reconnecting...");
-        });
-
-        setClient(mqttClient);
+        // setClient(mockClient);
+        setIsConnected(true);
+        setLogSuccess("✅ Connected to MQTT (Demo Mode)");
 
         return () => {
-            mqttClient.end();
             setIsConnected(false);
         };
     }, [resetTrigger]);
@@ -263,11 +232,7 @@ function HomePage() {
                         <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setStep(1)}>
                             Back
                         </button>
-                        <button 
-                            className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
-                            disabled={cart.length === 0}
-                            onClick={() => setStep(3)}
-                        >
+                        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setStep(3)}>
                             Choose Payment
                         </button>
                     </div>
@@ -338,7 +303,6 @@ function HomePage() {
                             );
                             setPaymentMethod("");
                             setLogSuccess("");
-                            setSummaryCart("");
                         }}
                     >
                         Start Over
@@ -351,22 +315,12 @@ function HomePage() {
                 <div className="mt-4 p-4 bg-blue-100 text-blue-800 rounded">
                     <h3 className="font-semibold">System Log:</h3>
                     <p className="mt-2">{logSuccess}</p>
-                    {step === 4 && cartSummary && (
+                    {step === 4 && (
                         <div className="mt-3 p-3 bg-white rounded">
                             <p className="font-semibold text-sm mb-2">Sent Message:</p>
                             <pre className="text-xs overflow-auto">{JSON.stringify(JSON.parse(cartSummary), null, 2)}</pre>
                         </div>
                     )}
-                </div>
-            )}
-
-            {/* Received Messages Display */}
-            {summaryCart && (
-                <div className="mt-4 p-4 bg-purple-100 text-purple-800 rounded">
-                    <h3 className="font-semibold">Received Message:</h3>
-                    <pre className="text-xs overflow-auto mt-2 bg-white p-2 rounded">
-                        {summaryCart}
-                    </pre>
                 </div>
             )}
         </div>
