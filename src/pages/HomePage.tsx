@@ -1,7 +1,15 @@
-import { useState, useMemo, useEffect} from "react";
-import { itemsCategories as initialItems } from "../lib/constant";
-// Mock data for demonstration
-import mqtt from 'mqtt'
+import { useState, useMemo, useEffect } from "react";
+import mqtt from 'mqtt';
+
+// Mock items for demonstration
+const initialItems = [
+    { itemName: "Coke", cost: 1.50, itemId: "1", stock: 10, image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300", description: "Refreshing cola drink" },
+    { itemName: "Pepsi", cost: 1.50, itemId: "2", stock: 8, image: "https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=300", description: "Classic pepsi" },
+    { itemName: "Water", cost: 1.00, itemId: "3", stock: 15, image: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=300", description: "Pure water" },
+    { itemName: "Chips", cost: 2.00, itemId: "4", stock: 12, image: "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300", description: "Crispy chips" },
+    { itemName: "Candy", cost: 1.25, itemId: "5", stock: 20, image: "https://images.unsplash.com/photo-1581798459219-c944e5d3e18d?w=300", description: "Sweet candy" },
+    { itemName: "Gum", cost: 0.75, itemId: "6", stock: 25, image: "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=300", description: "Fresh gum" }
+];
 
 interface Item {
     itemName: string;
@@ -18,6 +26,7 @@ interface CartItem {
     quantity: number;
     itemId: string;
 }
+
 function HomePage() {
     const [client, setClient] = useState<mqtt.MqttClient | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -25,7 +34,7 @@ function HomePage() {
     const [step, setStep] = useState(1);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [paymentMethod, setPaymentMethod] = useState("");
-   //  const [receivedMessages, setReceivedMessages] = useState([]);
+    const [logSuccess, setLogSuccess] = useState("");
 
     const [quantities, setQuantities] = useState(
         Object.fromEntries(initialItems.map(item => [item.itemName, 0]))
@@ -35,50 +44,71 @@ function HomePage() {
         initialItems.map(i => ({ ...i }))
     );
 
-    const [logSuccess, setLogSuccess] = useState("");
-
-    // Create cart summary with full details
+    // Create cart summary with item names
     const cartSummary = useMemo(() => {
-        return JSON.stringify(cart.map(c => c.itemName).join(' '));
-    }, [cart, paymentMethod]);
+        return cart.map(c => `${c.itemName} x${c.quantity}`).join(', ');
+    }, [cart]);
 
-     const host = "wss://mqtt.netpie.io:443/mqtt";
-    const options = {
-        clientId: import.meta.env.VITE_CLIENT_ID,
-        username: import.meta.env.VITE_TOKEN,
-        password: import.meta.env.VITE_PASSWORD,
-    };
+    // MQTT Configuration
+    const mqttConfig = useMemo(() => ({
+        host: "wss://mqtt.netpie.io:443/mqtt",
+        options: {
+            clientId: import.meta.env.VITE_CLIENT_ID || "demo-client",
+            username: import.meta.env.VITE_TOKEN || "demo",
+            password: import.meta.env.VITE_PASSWORD || "demo",
+        }
+    }), []);
 
-    // MQTT Connection (simulated for demo)
+    // MQTT Connection with proper event handling
     useEffect(() => {
-        const mqttClient = mqtt.connect(host, options);
-        setClient(mqttClient);
+        const mqttClient = mqtt.connect(mqttConfig.host, mqttConfig.options);
         
-        setIsConnected(true);
-        setLogSuccess("✅ Connected to MQTT (Demo Mode)");
+        mqttClient.on('connect', () => {
+            console.log('✅ MQTT Connected');
+            setIsConnected(true);
+            setClient(mqttClient);
+            setLogSuccess("✅ Connected to MQTT");
+        });
+        
+        mqttClient.on('error', (err) => {
+            console.error('❌ MQTT Error:', err);
+            setLogSuccess(`❌ Connection failed: ${err.message}`);
+            setIsConnected(false);
+        });
+
+        mqttClient.on('offline', () => {
+            console.log('⚠️ MQTT Offline');
+            setIsConnected(false);
+        });
+
+        mqttClient.on('reconnect', () => {
+            console.log('🔄 MQTT Reconnecting...');
+            setLogSuccess("🔄 Reconnecting to MQTT...");
+        });
 
         return () => {
+            if (mqttClient) {
+                mqttClient.end();
+            }
             setIsConnected(false);
         };
-    }, [resetTrigger]);
+    }, [resetTrigger, mqttConfig.host, mqttConfig.options]);
 
     // Publish message function
-    const publishMessage = (topic:string, msg:string) => {
-
-        console.log(client, isConnected, 'client is connected')
+    const publishMessage = (topic: string, msg: string) => {
         if (!client || !isConnected) {
             console.log("❌ MQTT client not ready");
-            setLogSuccess("Error: MQTT not connected");
+            setLogSuccess("❌ Error: MQTT not connected");
             return;
         }
 
         client.publish(topic, msg, {}, (err) => {
             if (err) {
                 console.error("Publish error:", err);
-                setLogSuccess(`Error: ${err.message}`);
+                setLogSuccess(`❌ Error: ${err.message}`);
             } else {
                 console.log(`📤 Sent to ${topic}:`, msg);
-                setLogSuccess(`Successfully sent message to ${topic}`);
+                setLogSuccess(`✅ Successfully sent message to ${topic}`);
             }
         });
     };
@@ -86,7 +116,13 @@ function HomePage() {
     const onConfirmPayment = () => {
         if (paymentMethod) {
             // Send cart summary when payment is confirmed
-            publishMessage("@msg/vending", cartSummary);
+            const message = JSON.stringify({
+                items: cart,
+                paymentMethod: paymentMethod,
+                total: cart.reduce((sum, c) => sum + (c.cost * c.quantity), 0),
+                timestamp: new Date().toISOString()
+            });
+            publishMessage("@msg/vending", message);
             setStep(4);
         }
     };
@@ -128,7 +164,17 @@ function HomePage() {
         setCart(filteredCart);
     };
 
-    
+    const resetApp = () => {
+        setStep(1);
+        setCart([]);
+        setItems(initialItems.map(i => ({ ...i })));
+        setQuantities(
+            Object.fromEntries(initialItems.map(item => [item.itemName, 0]))
+        );
+        setPaymentMethod("");
+        setLogSuccess("");
+        setResetTrigger(prev => prev + 1);
+    };
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
@@ -166,7 +212,7 @@ function HomePage() {
                                         <span className="font-semibold">{qty}</span>
                                         <button
                                             className="bg-gray-300 px-2 py-1 rounded disabled:opacity-40"
-                                            disabled={item.stock === 0}
+                                            disabled={item.stock === 0 || qty >= item.stock}
                                             onClick={() => increaseQty(item)}
                                         >
                                             +
@@ -175,7 +221,7 @@ function HomePage() {
 
                                     <button
                                         className="mt-3 w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400"
-                                        disabled={item.stock === 0}
+                                        disabled={item.stock === 0 || qty === 0}
                                         onClick={() => addToCart(item)}
                                     >
                                         Add to Cart
@@ -185,10 +231,11 @@ function HomePage() {
                         })}
                     </div>
                     <button
-                        className="mt-5 bg-blue-600 text-white px-4 py-2 rounded"
+                        className="mt-5 bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
+                        disabled={cart.length === 0}
                         onClick={() => setStep(2)}
                     >
-                        Go to Cart
+                        Go to Cart ({cart.length} items)
                     </button>
                 </div>
             )}
@@ -208,11 +255,20 @@ function HomePage() {
                             ))}
                         </ul>
                     )}
+                    <div className="mt-4 p-3 bg-gray-100 rounded">
+                        <p className="text-lg font-bold">
+                            Total: ${cart.reduce((sum, c) => sum + (c.cost * c.quantity), 0).toFixed(2)}
+                        </p>
+                    </div>
                     <div className="mt-5 flex gap-3">
                         <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setStep(1)}>
                             Back
                         </button>
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setStep(3)}>
+                        <button 
+                            className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
+                            disabled={cart.length === 0}
+                            onClick={() => setStep(3)}
+                        >
                             Choose Payment
                         </button>
                     </div>
@@ -243,12 +299,15 @@ function HomePage() {
                         </button>
                         <button 
                             className="bg-green-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
-                            disabled={!paymentMethod}
+                            disabled={!paymentMethod }
                             onClick={onConfirmPayment}
                         >
                             Confirm Payment
                         </button>
                     </div>
+                    {!isConnected && (
+                        <p className="mt-3 text-red-600 text-sm">⚠️ MQTT not connected. Please wait or refresh.</p>
+                    )}
                 </div>
             )}
 
@@ -258,8 +317,9 @@ function HomePage() {
                     <h2 className="text-2xl font-bold mb-4">4. Order Summary</h2>
                     <div className="bg-green-50 border border-green-200 p-4 rounded mb-4">
                         <p className="text-green-800 font-semibold">✅ Order sent to vending machine!</p>
+                        <p className="text-sm text-green-700 mt-1">Items: {cartSummary}</p>
                     </div>
-                    <h3 className="font-semibold">Items:</h3>
+                    <h3 className="font-semibold">Order Details:</h3>
                     <ul className="mb-4">
                         {cart.map((item, i) => (
                             <li key={i} className="py-1">
@@ -273,17 +333,7 @@ function HomePage() {
                     </p>
                     <button
                         className="mt-6 bg-blue-600 text-white px-4 py-2 rounded"
-                        onClick={() => {
-                            setStep(1);
-                            setCart([]);
-                            setItems(initialItems.map(i => ({ ...i })));
-                            setResetTrigger(prev => prev + 1);
-                            setQuantities(
-                                Object.fromEntries(initialItems.map(item => [item.itemName, 0]))
-                            );
-                            setPaymentMethod("");
-                            setLogSuccess("");
-                        }}
+                        onClick={resetApp}
                     >
                         Start Over
                     </button>
@@ -295,12 +345,6 @@ function HomePage() {
                 <div className="mt-4 p-4 bg-blue-100 text-blue-800 rounded">
                     <h3 className="font-semibold">System Log:</h3>
                     <p className="mt-2">{logSuccess}</p>
-                    {step === 4 && (
-                        <div className="mt-3 p-3 bg-white rounded">
-                            <p className="font-semibold text-sm mb-2">Sent Message:</p>
-                            <pre className="text-xs overflow-auto">{JSON.stringify(JSON.parse(cartSummary), null, 2)}</pre>
-                        </div>
-                    )}
                 </div>
             )}
         </div>
