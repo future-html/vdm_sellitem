@@ -19,7 +19,7 @@ interface CartItem {
     itemId: string;
 }
 function HomePage() {
-    const [client, _] = useState<mqtt.MqttClient | null>(null);
+    const [client, setClient] = useState<mqtt.MqttClient | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [resetTrigger, setResetTrigger] = useState(0);
     const [step, setStep] = useState(1);
@@ -42,8 +42,30 @@ function HomePage() {
         return JSON.stringify(cart.map(c => c.itemName).join(' '));
     }, [cart, paymentMethod]);
 
+     const host = "wss://mqtt.netpie.io:443/mqtt";
+    const options = {
+        clientId: import.meta.env.VITE_CLIENT_ID,
+        username: import.meta.env.VITE_TOKEN,
+        password: import.meta.env.VITE_PASSWORD,
+    };
+
+    // MQTT Connection (simulated for demo)
+    useEffect(() => {
+        const mqttClient = mqtt.connect(host, options);
+        setClient(mqttClient);
+        
+        setIsConnected(true);
+        setLogSuccess("✅ Connected to MQTT (Demo Mode)");
+
+        return () => {
+            setIsConnected(false);
+        };
+    }, [resetTrigger]);
+
     // Publish message function
     const publishMessage = (topic:string, msg:string) => {
+
+        console.log(client, isConnected, 'client is connected')
         if (!client || !isConnected) {
             console.log("❌ MQTT client not ready");
             setLogSuccess("Error: MQTT not connected");
@@ -106,40 +128,7 @@ function HomePage() {
         setCart(filteredCart);
     };
 
-    // MQTT Connection (simulated for demo)
-    useEffect(() => {
-        // Simulate MQTT connection
-        // interface MockMqttClient {
-        //     connected: boolean;
-        //     publish: (topic: string, message: string, options: Record<string, unknown>, callback: (err: Error | null) => void) => void;
-        //     subscribe: (topic: string, callback: (err: Error | null) => void) => void;
-        //     on: (event: string, handler: (data: unknown) => void) => void;
-        //     end: () => void;
-        // }
-
-        // const mockClient: MockMqttClient = {
-        //     connected: true,
-        //     publish: (topic, message, _, callback) => {
-        //     setTimeout(() => {
-        //         console.log(`Published to ${topic}:`, message);
-        //         callback(null);
-        //     }, 100);
-        //     },
-        //     subscribe: (_, callback) => {
-        //     setTimeout(() => callback(null), 100);
-        //     },
-        //     on: () => {},
-        //     end: () => {}
-        // };
-
-        // setClient(mockClient);
-        setIsConnected(true);
-        setLogSuccess("✅ Connected to MQTT (Demo Mode)");
-
-        return () => {
-            setIsConnected(false);
-        };
-    }, [resetTrigger]);
+    
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
