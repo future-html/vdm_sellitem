@@ -285,6 +285,16 @@ function HomePage() {
                             console.log(result)
                             setLogSuccess(result)
 
+                            setTimeout(() => {
+                                fetch('https://api.netpie.io/v2/device/shadow/data', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    "Authorization": `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
+                                },
+                                body: JSON.stringify({ "data": { number:"" }})})
+                            }, 10000); 
+
 
                         }}
                     >
