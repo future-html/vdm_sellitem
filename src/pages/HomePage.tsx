@@ -280,7 +280,7 @@ function HomePage() {
                                     'Content-Type': 'application/json',
                                     "Authorization": `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
                                 },
-                                body: JSON.stringify({ "data": { number: cart.map((_, index)=> `slot ${index}`).join(' ')} })
+                                body: JSON.stringify({ "data": { number: cart.map((c)=> c.itemName).join(' ')} })
                             }).then(res => res.json()).catch(err => console.error(err));
                             console.log(result)
                             setLogSuccess(result)
