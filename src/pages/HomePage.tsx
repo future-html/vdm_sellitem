@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { itemsCategories as initialItems } from "../lib/constant";
-import { storage } from "../utils/localStorage";
+// import { storage } from "../utils/localStorage";
 interface Item {
     itemName: string;
     cost: number;
@@ -40,11 +40,11 @@ function HomePage() {
         if (paymentMethod) setStep(4);
     };
 
-    const auth = storage.get('user') as { name?: string } | null;
-    const username = useMemo(() => {
-        return auth?.name || "Guest";
-    }, [auth])
-    const email = "";
+    // const auth = storage.get('user') as { name?: string } | null;
+    // const username = useMemo(() => {
+    //     return auth?.name || "Guest";
+    // }, [auth])
+    // const email = "";
 
 
 
