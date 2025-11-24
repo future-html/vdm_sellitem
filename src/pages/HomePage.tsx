@@ -293,7 +293,7 @@ function HomePage() {
                                     "Authorization": `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
                                 },
                                 body: JSON.stringify({ "data": { number:"" }})})
-                            }, 800); 
+                            }, 3000); 
 
 
                         }}
