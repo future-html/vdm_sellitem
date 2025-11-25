@@ -8,7 +8,11 @@ function App() {
     <Routes>
       {/* Protected Routes - Requires Authentication */}
       <Route element={<PrivateRoutes />}>
-        <Route path='/' element={<HomePage />} />
+        <Route path='/' element={
+          <div className='bg-black w-full mx-auto'>
+          <HomePage />
+          </div>
+          } />
         <Route path='/products' element={<Products />} />
         <Route path='/payments' element={<Payments />} />
       </Route>

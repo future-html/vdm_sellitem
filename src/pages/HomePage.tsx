@@ -91,45 +91,45 @@ function HomePage() {
 
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
+        <div className="p-6 max-w-4xl mx-auto text-white min-h-screen">
 
             {/* --------------------------- */}
             {/* STEP 1: Choose Items */}
             {/* --------------------------- */}
             {step === 1 && (
                 <div>
-                    <h2 className="text-2xl font-bold mb-4">1. Choose Items</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-white">1. Choose Items</h2>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {items.map((item) => {
                             const qty = quantities[item.itemName];
 
                             return (
                                 <div
                                     key={item.itemName}
-                                    className={`border p-4 rounded ${item.stock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-gray-100"
+                                    className={`border border-white p-4 rounded bg-black ${item.stock === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-gray-900"
                                         }`}
                                 >
                                     <img src={item.image} className="w-full h-32 object-cover rounded" />
-                                    <h3 className="font-semibold mt-2">{item.itemName}</h3>
-                                    <p className="text-sm text-gray-600">{item.description}</p>
-                                    <p className="font-bold mt-1">${item.cost.toFixed(2)}</p>
-                                    <p className="text-sm mt-1">Stock: {item.stock}</p>
+                                    <h3 className="font-semibold mt-2 text-white">{item.itemName}</h3>
+                                    <p className="text-sm text-gray-400">{item.description}</p>
+                                    <p className="font-bold mt-1 text-white">${item.cost.toFixed(2)}</p>
+                                    <p className="text-sm mt-1 text-gray-300">Stock: {item.stock}</p>
 
                                     {/* Quantity Controls */}
                                     <div className="flex items-center gap-3 mt-3">
                                         <button
-                                            className="bg-gray-300 px-2 py-1 rounded disabled:opacity-40"
+                                            className="bg-gray-800 text-white border border-white px-2 py-1 rounded disabled:opacity-40"
                                             disabled={qty === 0}
                                             onClick={() => decreaseQty(item)}
                                         >
                                             -
                                         </button>
 
-                                        <span className="font-semibold">{qty}</span>
+                                        <span className="font-semibold text-white">{qty}</span>
 
                                         <button
-                                            className="bg-gray-300 px-2 py-1 rounded disabled:opacity-40"
+                                            className="bg-gray-800 text-white border border-white px-2 py-1 rounded disabled:opacity-40"
                                             disabled={item.stock === 0}
                                             onClick={() => increaseQty(item)}
                                         >
@@ -139,7 +139,7 @@ function HomePage() {
 
                                     {/* Add to Cart Button */}
                                     <button
-                                        className="mt-3 w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400"
+                                        className="mt-3 w-full bg-cyan-600 text-white py-2 rounded disabled:bg-gray-800 disabled:opacity-40"
                                         disabled={item.stock === 0}
                                         onClick={() => addToCart(item)}
                                     >
@@ -152,7 +152,7 @@ function HomePage() {
                     </div>
 
                     <button
-                        className="mt-5 bg-blue-600 text-white px-4 py-2 rounded"
+                        className="mt-5 bg-cyan-600 text-white border border-white px-4 py-2 rounded"
                         onClick={() => setStep(2)}
                     >
                         Go to Cart
@@ -165,14 +165,14 @@ function HomePage() {
             {/* --------------------------- */}
             {step === 2 && (
                 <div>
-                    <h2 className="text-2xl font-bold mb-4">2. Your Cart</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-white">2. Your Cart</h2>
 
                     {cart.length === 0 ? (
-                        <p>No items selected.</p>
+                        <p className="text-white">No items selected.</p>
                     ) : (
                         <ul className="space-y-2">
                             {cart.map((item, index) => (
-                                <li key={index} className="border p-3 rounded">
+                                <li key={index} className="border border-white p-3 rounded bg-black text-white">
                                     {item.itemName} – ${item.cost.toFixed(2)} - Qty: {item.quantity}
                                 </li>
                             ))}
@@ -181,14 +181,14 @@ function HomePage() {
 
                     <div className="mt-5 flex gap-3">
                         <button
-                            className="bg-gray-300 px-4 py-2 rounded"
+                            className="bg-gray-800 text-white border border-white px-4 py-2 rounded"
                             onClick={() => setStep(1)}
                         >
                             Back
                         </button>
 
                         <button
-                            className="bg-blue-600 text-white px-4 py-2 rounded"
+                            className="bg-cyan-600 text-white border border-white px-4 py-2 rounded"
                             onClick={() => setStep(3)}
                         >
                             Choose Payment
@@ -202,16 +202,17 @@ function HomePage() {
             {/* --------------------------- */}
             {step === 3 && (
                 <div>
-                    <h2 className="text-2xl font-bold mb-4">3. Payment Options</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-white">3. Payment Options</h2>
 
                     <div className="space-y-3">
                         {["Credit Card", "Cash on Delivery", "Bank Transfer"].map((method) => (
-                            <label key={method} className="flex items-center gap-2 cursor-pointer">
+                            <label key={method} className="flex items-center gap-2 cursor-pointer text-white">
                                 <input
                                     type="radio"
                                     name="payment"
                                     value={method}
                                     onChange={(e) => setPaymentMethod(e.target.value)}
+                                    className="accent-blue-600"
                                 />
                                 {method}
                             </label>
@@ -220,14 +221,14 @@ function HomePage() {
 
                     <div className="mt-5 flex gap-3">
                         <button
-                            className="bg-gray-300 px-4 py-2 rounded"
+                            className="bg-gray-800 text-white border border-white px-4 py-2 rounded"
                             onClick={() => setStep(2)}
                         >
                             Back
                         </button>
 
                         <button
-                            className="bg-green-600 text-white px-4 py-2 rounded"
+                            className="bg-green-600 text-white border border-white px-4 py-2 rounded"
                             onClick={onConfirmPayment}
                         >
                             Confirm Payment
@@ -241,25 +242,25 @@ function HomePage() {
             {/* --------------------------- */}
             {step === 4 && (
                 <div>
-                    <h2 className="text-2xl font-bold mb-4">4. Summary</h2>
+                    <h2 className="text-2xl font-bold mb-4 text-white">4. Summary</h2>
 
-                    <h3 className="font-semibold">Items:</h3>
-                    <ul className="mb-4">
+                    <h3 className="font-semibold text-white">Items:</h3>
+                    <ul className="mb-4 text-white">
                         {cart.map((item, i) => (
                             <li key={i}>{item.itemName} – ${item.cost.toFixed(2)}</li>
                         ))}
                     </ul>
 
-                    <p>
+                    <p className="text-white">
                         <strong>Payment Method:</strong> {paymentMethod}
                     </p>
 
-                    <p className="mt-4 text-lg font-bold">
+                    <p className="mt-4 text-lg font-bold text-white">
                         Total: {cart.map((c) => c.cost * c.quantity).reduce((a, b) => a + b, 0).toFixed(2)}
                     </p>
 
                     <button
-                        className="mt-6 bg-blue-600 text-white px-4 py-2 rounded"
+                        className="mt-6 bg-cyan-600 text-white border border-white px-4 py-2 rounded"
                         onClick={async () => {
                             setStep(1);
                             setCart([]);
@@ -303,7 +304,7 @@ function HomePage() {
                 </div>
             )}
 
-            {logSuccess && (<div className="mt-4 p-4 bg-green-100 text-green-800 rounded">
+            {logSuccess && (<div className="mt-4 p-4 bg-gray-900 text-white border border-white rounded">
                 <h3 className="font-semibold">Log Success:</h3>
                 <pre className="whitespace-pre-wrap">{JSON.stringify(logSuccess, null, 2)}</pre>
             </div>

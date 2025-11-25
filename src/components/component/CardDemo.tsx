@@ -22,7 +22,7 @@ interface InputDispatchProps {
 }
 export function CardDemo({ name, email, password,error, setName, setEmail, setPassword, handleSubmit}: InputDispatchProps) {
     return (
-        <Card className="w-full max-w-sm">
+        <Card className="border-none w-full bg-black text-white max-w-sm">
             <CardHeader>
                 <CardTitle>Login to your account</CardTitle>
                 <CardDescription>
