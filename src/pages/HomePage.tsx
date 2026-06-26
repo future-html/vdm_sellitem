@@ -262,41 +262,45 @@ function HomePage() {
                     <button
                         className="mt-6 bg-cyan-600 text-white border border-white px-4 py-2 rounded"
                         onClick={async () => {
-                            setStep(1);
-                            setCart([]);
-
-                            // reset stock
-                            setItems(initialItems.map(i => ({ ...i })));
-
-                            // reset quantities
-                            setQuantities(
-                                Object.fromEntries(initialItems.map(item => [item.itemName, 0]))
-                            );
-
-                            // reset payment
-                            setPaymentMethod("");
-                            const result = await fetch('https://api.netpie.io/v2/device/shadow/data', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    "Authorization": `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
-                                },
-                                body: JSON.stringify({ "data": { number: cart.map((c)=> c.itemName).join(' ')} })
-                            }).then(res => res.json()).catch(err => console.error(err));
-                            console.log(result)
-                            setLogSuccess(result)
-
-                            setTimeout(() => {
-                                fetch('https://api.netpie.io/v2/device/shadow/data', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    "Authorization": `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
-                                },
-                                body: JSON.stringify({ "data": { number:"" }})})
-                            }, 5000); 
-
-
+                          setStep(1);
+                          setCart([]);
+                        
+                          // reset stock
+                          setItems(initialItems.map(i => ({ ...i })));
+                        
+                          // reset quantities
+                          setQuantities(
+                            Object.fromEntries(initialItems.map(item => [item.itemName, 0]))
+                          );
+                        
+                          // reset payment
+                          setPaymentMethod("");
+                        
+                          const result = await fetch('https://api.netpie.io/v2/device/shadow/data', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
+                            },
+                            body: JSON.stringify({ "data": { number: cart.map((c) => c.itemName).join(' ') } })
+                          }).then(res => res.json()).catch(err => console.error(err));
+                        
+                          setLogSuccess(result);
+                        
+                          // ใช้ setInterval แทน setTimeout
+                          const intervalId = setInterval(() => {
+                            fetch('https://api.netpie.io/v2/device/shadow/data', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Device ${import.meta.env.VITE_CLIENT_ID}:${import.meta.env.VITE_TOKEN}`
+                              },
+                              body: JSON.stringify({ "data": { number: "" } })
+                            });
+                        
+                            // เคลียร์ interval ทันทีหลังทำงานครั้งแรก (ถ้าอยากให้ทำงานต่อเนื่องให้ลบบรรทัดนี้ออก)
+                            clearInterval(intervalId);
+                          }, 5000);
                         }}
                     >
                         Start Over
