@@ -300,7 +300,7 @@ function HomePage() {
                         
                             // เคลียร์ interval ทันทีหลังทำงานครั้งแรก (ถ้าอยากให้ทำงานต่อเนื่องให้ลบบรรทัดนี้ออก)
                             clearInterval(intervalId);
-                          }, 2000);
+                          }, 5000);
                         }}
                     >
                         Start Over
